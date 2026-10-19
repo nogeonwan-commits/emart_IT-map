@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>이마트 광주점 스마트 매장 내비게이션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .mobile-container { width: 100%; max-width: 420px; height: 100dvh; background-color: white; position: relative; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); display: flex; flex-direction: column; }
+        @media (min-width: 450px) { .mobile-container { height: 840px; border-radius: 2.5rem; border: 8px solid #1f2937; } }
+        .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .allergy-checkbox { display: none; }
+        .allergy-label { display: inline-block; padding: 0.3rem 0.6rem; border: 1px solid #d1d5db; border-radius: 9999px; font-size: 0.65rem; color: #4b5563; background-color: #f9fafb; cursor: pointer; transition: all 0.2s; }
+        .allergy-checkbox:checked + .allergy-label { background-color: #252525; color: white; border-color: #252525; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- 첫 화면 스플래시 -->
+        <div id="splash-screen" class="absolute inset-0 bg-white z-50 flex justify-center items-center">
+            <img src="이마트 로고.jpg" alt="emart logo" class="w-3/5 object-contain" onerror="this.src='https://placehold.co/200x80?text=EMART'">
+        </div>
+
+        <!-- 로그인/회원가입 화면 -->
+        <div id="signup-screen" class="absolute inset-0 bg-white z-40 hidden flex-col justify-between p-6 overflow-y-auto">
+            <div>
+                <div class="py-4 flex justify-center">
+                    <img src="이마트 로고.jpg" alt="emart logo" class="h-8 object-contain" onerror="this.src='https://placehold.co/120x40?text=EMART'">
+                </div>
+                <div class="text-center mb-4">
+                    <h2 class="text-sm font-black text-gray-900">스마트 장보기 내비게이션</h2>
+                    <p class="text-[11px] text-gray-500 mt-0.5">맞춤형 쇼핑 환경을 설정해주세요.</p>
+                </div>
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-800 mb-1">아이디 <span class="text-red-500">*</span></label>
+                        <input type="text" id="signupId" placeholder="아이디 입력" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3.5 py-3 text-xs focus:outline-none focus:border-black">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-800 mb-1">비밀번호 <span class="text-red-500">*</span></label>
+                        <input type="password" id="signupPw" oninput="checkPassword()" placeholder="영문, 숫자 조합 6자 이상" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3.5 py-3 text-xs focus:outline-none focus:border-black">
+                        <p id="pwFeedback" class="text-[10px] mt-1 text-gray-400">영문, 숫자 조합 6자 이상 입력해주세요.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-800 mb-1">주 방문 지점 <span class="text-red-500">*</span></label>
+                        <select id="signupStore" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3.5 py-3 text-xs focus:outline-none focus:border-black">
+                            <option value="gwangju" selected>이마트 광주점</option>
+                        </select>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2.5">
+                        <label class="block text-xs font-bold text-gray-800 mb-1.5">알레르기 유발 물질 제외 (선택)</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <input type="checkbox" id="al_egg" class="allergy-checkbox"><label for="al_egg" class="allergy-label">🥚 계란</label>
+                            <input type="checkbox" id="al_milk" class="allergy-checkbox"><label for="al_milk" class="allergy-label">🥛 우유</label>
+                            <input type="checkbox" id="al_soy" class="allergy-checkbox"><label for="al_soy" class="allergy-label">🫘 대두</label>
+                            <input type="checkbox" id="al_wheat" class="allergy-checkbox"><label for="al_wheat" class="allergy-label">🌾 밀</label>
+                            <input type="checkbox" id="al_peanut" class="allergy-checkbox"><label for="al_peanut" class="allergy-label">🥜 땅콩</label>
+                            <input type="checkbox" id="al_shrimp" class="allergy-checkbox"><label for="al_shrimp" class="allergy-label">🦐 새우</label>
+                            <input type="checkbox" id="al_crab" class="allergy-checkbox"><label for="al_crab" class="allergy-label">🦀 게</label>
+                            <input type="checkbox" id="al_peach" class="allergy-checkbox"><label for="al_peach" class="allergy-label">🍑 복숭아</label>
+                            <input type="checkbox" id="al_tomato" class="allergy-checkbox"><label for="al_tomato" class="allergy-label">🍅 토마토</label>
+                        </div>
+                    </div>
+                    <div class="pt-1">
+                        <label class="block text-xs font-bold text-gray-800 mb-1">선호 원산지</label>
+                        <div class="flex gap-4 text-xs text-gray-600">
+                            <label class="flex items-center"><input type="radio" name="origin" value="domestic" class="mr-1 accent-black"> 국내산 우선</label>
+                            <label class="flex items-center"><input type="radio" name="origin" value="any" checked class="mr-1 accent-black"> 상관없음</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 pb-2">
+                <button onclick="finishSignup()" class="w-full bg-[#252525] text-white font-bold py-3.5 rounded-xl hover:bg-black transition text-sm shadow-md cursor-pointer">
+                    가입하고 장보기 시작
+                </button>
+            </div>
+        </div>
+
+        <!-- 메인 앱 화면 -->
+        <div id="main-app" class="hidden flex-col h-full bg-[#f8f9fa] relative z-30">
+            <header class="bg-white px-4 py-3 border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
+                <img src="이마트 로고.jpg" alt="emart logo" class="h-5 object-contain" onerror="this.src='https://placehold.co/100x35?text=EMART'">
+                <button class="text-gray-800 relative">
+                    <i class="fas fa-shopping-cart text-lg"></i>
+                    <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">0</span>
+                </button>
+            </header>
+
+            <!-- [탭 1] 홈 화면 (검색 및 상품 리스트) -->
+            <div id="tab-home" class="flex-col flex-grow p-4 overflow-y-auto no-scrollbar pb-20 gap-3 flex">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-gray-900 text-xs mb-2">장보기 메모</h2>
+                    <div class="flex gap-2 relative">
+                        <i class="fas fa-search absolute left-3.5 top-3 text-gray-400 text-xs"></i>
+                        <input type="text" id="itemInput" placeholder="상품 검색 (예: 갈치, 고등어, 삼겹살, 돈까스, 와인)" 
+                               class="flex-grow bg-gray-50 border border-gray-200 pl-9 pr-3 py-2.5 rounded-lg text-xs focus:outline-none focus:border-black"
+                               onkeypress="if(event.key === 'Enter') processInput()">
+                        <button onclick="processInput()" class="bg-[#252525] text-white px-3.5 py-2.5 rounded-lg font-bold text-xs cursor-pointer">등록</button>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm flex-grow flex flex-col border border-gray-100">
+                    <div class="font-bold text-gray-900 mb-2 text-xs flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span>선택한 상품 리스트</span>
+                        <span id="itemCount" class="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">0 건</span>
+                    </div>
+                    <div id="userList" class="flex flex-col gap-2 flex-grow overflow-y-auto">
+                        <div id="emptyState" class="text-center py-10 text-gray-400 flex flex-col items-center">
+                            <i class="fas fa-box-open text-2xl mb-2 text-gray-300"></i>
+                            <span class="text-xs">구매할 상품을 검색해 추가해보세요.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [탭 2] 매장맵 (emart_mape.png 적용 및 출발(IN)/출구(OUT) 내비게이션 경로선 렌더링) -->
+            <div id="tab-map" class="hidden flex-col flex-grow p-4 overflow-y-auto no-scrollbar pb-20 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 relative flex flex-col items-center flex-grow">
+                    <div class="w-full flex justify-between items-center mb-2 px-1">
+                        <h3 class="font-bold text-gray-900 text-xs"><i class="fas fa-route text-yellow-500 mr-1.5"></i>이마트 광주점 실시간 내비게이션 맵</h3>
+                        <span class="text-[10px] text-gray-400"><span class="text-green-600 font-bold">출발(IN)</span> ➔ <span class="text-red-600 font-bold">출구(OUT)</span></span>
+                    </div>
+                    <div class="relative w-full flex-grow rounded-lg overflow-hidden border border-gray-200 bg-gray-900 flex items-center justify-center min-h-[380px]">
+                        <img id="routeMapImage" src="emart_mape.png" alt="매장 지도" class="w-full h-full object-contain opacity-95" crossorigin="anonymous" onerror="this.src='https://placehold.co/400x400?text=EMART+NAV+MAP'">
+                        <canvas id="mapCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- [탭 3] 경로맵 (상세 최적 이동 경로 순서 안내 전용) -->
+            <div id="tab-routemap" class="hidden flex-col flex-grow p-4 overflow-y-auto no-scrollbar pb-20 gap-3">
+                <div class="font-bold text-gray-900 text-xs mt-1 mb-1 flex justify-between items-center px-1">
+                    <span><i class="fas fa-directions text-yellow-500 mr-1.5"></i>상세 최적 이동 경로 순서 안내</span>
+                    <span id="routeCount" class="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-bold">0개 코스</span>
+                </div>
+                <div id="customerRouteList" class="flex flex-col gap-2">
+                    <div class="text-center py-10 text-gray-400 text-xs">선택된 상품이 없습니다. 홈 탭에서 상품을 추가해주세요.</div>
+                </div>
+            </div>
+
+            <!-- 하단 네비게이션 바 -->
+            <nav class="bg-white border-t border-gray-200 flex justify-around p-2 absolute bottom-0 w-full z-20 shadow-md">
+                <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-black pt-1 cursor-pointer">
+                    <i class="fas fa-home text-base mb-0.5"></i>
+                    <span class="text-[10px] font-bold">홈</span>
+                </button>
+                <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center text-gray-400 hover:text-black pt-1 cursor-pointer">
+                    <i class="fas fa-map-marked-alt text-base mb-0.5"></i>
+                    <span class="text-[10px] font-bold">매장맵</span>
+                </button>
+                <button onclick="switchTab('routemap')" id="nav-routemap" class="flex flex-col items-center text-gray-400 hover:text-black pt-1 cursor-pointer">
+                    <i class="fas fa-route text-base mb-0.5"></i>
+                    <span class="text-[10px] font-bold">경로맵</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 스크립트 엔진 -->
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('splash-screen').classList.add('fade-out');
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    const signup = document.getElementById('signup-screen');
+                    signup.classList.remove('hidden');
+                    signup.classList.add('flex');
+                }, 400);
+            }, 1000);
+        });
+
+        let isPwValid = false;
+        function checkPassword() {
+            const pw = document.getElementById('signupPw').value;
+            const feedback = document.getElementById('pwFeedback');
+            const regex = /^(?=.*[a-zA-Z])(?=.*[0-9]).{6,}$/;
+            if(regex.test(pw)) {
+                feedback.innerHTML = `<i class="fas fa-check-circle mr-1 text-green-500"></i>사용 가능한 비밀번호입니다.`;
+                feedback.className = "text-[10px] mt-1 text-green-500";
+                isPwValid = true;
+            } else {
+                feedback.innerHTML = `영문, 숫자 조합 6자 이상 입력해주세요.`;
+                feedback.className = "text-[10px] mt-1 text-gray-400";
+                isPwValid = false;
+            }
+        }
+
+        function finishSignup() {
+            const idVal = document.getElementById('signupId').value.trim();
+            if(!idVal) { alert("아이디를 입력해주세요."); return; }
+            if(!isPwValid) { alert("비밀번호 조건을 확인해주세요."); return; }
+            document.getElementById('signup-screen').classList.add('fade-out');
+            setTimeout(() => {
+                document.getElementById('signup-screen').style.display = 'none';
+                const main = document.getElementById('main-app');
+                main.classList.remove('hidden');
+                main.classList.add('flex');
+                initCanvas();
+            }, 400);
+        }
+
+        function switchTab(tabName) {
+            ['home', 'map', 'routemap'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('flex');
+                document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400 hover:text-black pt-1 cursor-pointer";
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('flex');
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "flex flex-col items-center text-black pt-1 cursor-pointer";
+            
+            if(tabName === 'map') { 
+                setTimeout(drawMapOverlay, 50); 
+            }
+        }
+
+        // 수산물(생선 코너), 축산, 야채, 과일, 가공식품, 냉동/냉장, 주류 등 대규모 확장 상품 DB
+        const enterpriseDB = {
+            // 수산물 (생선 코너)
+            "생선": { name: "제주 생물 갈치 (대형)", aisle: "aisle S1 (수산)", coord: "S1-1", x: 70, y: 12, vector: 2, stock: 15 },
+            "갈치": { name: "제주 생물 갈치 (대형)", aisle: "aisle S1 (수산)", coord: "S1-1", x: 70, y: 12, vector: 2, stock: 15 },
+            "고등어": { name: "안동 간고등어 순살 (2마리)", aisle: "aisle S1 (수산)", coord: "S1-2", x: 72, y: 12, vector: 2, stock: 25 },
+            "조기": { name: "법성포 영광굴비 (10마리)", aisle: "aisle S1 (수산)", coord: "S1-3", x: 75, y: 12, vector: 2, stock: 12 },
+            "연어": { name: "노르웨이 생연어 횟감용 400g", aisle: "aisle S1 (수산)", coord: "S1-4", x: 78, y: 12, vector: 2, stock: 14 },
+            "광어": { name: "국내산 광어회 모둠팩", aisle: "aisle S1 (수산)", coord: "S1-5", x: 80, y: 12, vector: 2, stock: 9 },
+            "참치": { name: "동원참치 라이트스탠다드", aisle: "aisle A7 (가공)", coord: "A7-5", x: 60, y: 32, vector: 3, stock: 65 },
+            "낙지": { name: "손질 통낙지 볶음용", aisle: "aisle S1 (수산)", coord: "S1-6", x: 83, y: 12, vector: 2, stock: 10 },
+            "오징어": { name: "국산 손질 오징어 2마리", aisle: "aisle S2 (수산)", coord: "S2-3", x: 78, y: 32, vector: 3, stock: 20 },
+            "새우": { name: "칵테일 새우살 500g", aisle: "aisle S2 (수산)", coord: "S2-5", x: 82, y: 32, vector: 3, stock: 18 },
+            "전복": { name: "완도 활전복 (특대 5마리)", aisle: "aisle S2 (수산)", coord: "S2-1", x: 74, y: 32, vector: 3, stock: 11 },
+            "꽃게": { name: "연평도 급냉 꽃게 1kg", aisle: "aisle S2 (수산)", coord: "S2-4", x: 80, y: 32, vector: 3, stock: 16 },
+
+            // Hot Food & Bakery
+            "초밥": { name: "모둠 초밥 세트 (특선)", aisle: "HOT FOOD", coord: "최상단 좌측", x: 22, y: 12, vector: 1, stock: 15 },
+            "치킨": { name: "어니언/양념 통닭", aisle: "HOT FOOD", coord: "최상단 좌측", x: 28, y: 12, vector: 1, stock: 20 },
+            "피자": { name: "자이언트 치즈 피자 조각", aisle: "HOT FOOD", coord: "최상단 좌측", x: 35, y: 12, vector: 1, stock: 12 },
+            "빵": { name: "크로와상 및 모닝빵 세트", aisle: "BAKERY", coord: "좌측 최상단", x: 8, y: 28, vector: 1, stock: 30 },
+            "케이크": { name: "생크림 케이크 2호", aisle: "BAKERY", coord: "좌측 최상단", x: 8, y: 32, vector: 1, stock: 8 },
+
+            // 돈까스 & 이연복 콜라보 및 냉동식품
+            "돈까스": { name: "피코크 등심 수제 돈카츠 600g", aisle: "aisle B3 (냉동)", coord: "B3-1", x: 36, y: 52, vector: 3, stock: 25 },
+            "치즈돈까스": { name: "피코크 모짜렐라 치즈돈카츠", aisle: "aisle B3 (냉동)", coord: "B3-1", x: 36, y: 52, vector: 3, stock: 18 },
+            "멘보샤": { name: "피코크 이연복 대가 멘보샤", aisle: "aisle B3 (냉동)", coord: "B3-2", x: 38, y: 55, vector: 3, stock: 12 },
+            "이연복멘보샤": { name: "피코크 이연복 대가 멘보샤", aisle: "aisle B3 (냉동)", coord: "B3-2", x: 38, y: 55, vector: 3, stock: 12 },
+            "탕수육": { name: "피코크 이연복 목화솜 탕수육", aisle: "aisle B3 (냉동)", coord: "B3-3", x: 40, y: 58, vector: 3, stock: 15 },
+            "짬뽕": { name: "피코크 이연복의 불향 가득 짬뽕", aisle: "aisle B3 (냉동)", coord: "B3-3", x: 40, y: 58, vector: 3, stock: 20 },
+            "만두": { name: "비비고 왕교자 만두", aisle: "aisle B3 (냉동)", coord: "B3-4", x: 38, y: 60, vector: 3, stock: 50 },
+            "볶음밥": { name: "천일 새우볶음밥", aisle: "aisle B3 (냉동)", coord: "B3-6", x: 38, y: 65, vector: 3, stock: 25 },
+
+            // 주류 (술)
+            "술": { name: "카스 프레시 캔맥주 6입", aisle: "aisle B7 (주류)", coord: "B7-3", x: 60, y: 65, vector: 3, stock: 200 },
+            "맥주": { name: "카스 프레시 캔맥주 (355ml x 6)", aisle: "aisle B7 (주류)", coord: "B7-3", x: 60, y: 65, vector: 3, stock: 200 },
+            "수제맥주": { name: "제주 위트 에일 캔맥주", aisle: "aisle B7 (주류)", coord: "B7-2", x: 59, y: 62, vector: 3, stock: 45 },
+            "소주": { name: "참이슬 후레쉬 소주", aisle: "aisle B7 (주류)", coord: "B7-6", x: 60, y: 70, vector: 3, stock: 150 },
+            "와인": { name: "디아블로 까베르네 쇼블랑", aisle: "aisle B6 (주류)", coord: "B6-2", x: 55, y: 65, vector: 3, stock: 30 },
+            "위스키": { name: "잭다니엘 허니 700ml", aisle: "aisle B6 (주류)", coord: "B6-5", x: 56, y: 70, vector: 3, stock: 18 },
+            "막걸리": { name: "지평 생 막걸리 750ml", aisle: "aisle B7 (주류)", coord: "B7-7", x: 61, y: 72, vector: 3, stock: 40 },
+
+            // 축산 (고기)
+            "삼겹살": { name: "국내산 돼지삼겹살 구이용", aisle: "aisle M1 (축산)", coord: "M1-3", x: 50, y: 12, vector: 2, stock: 45 },
+            "고기": { name: "국내산 돼지삼겹살 구이용", aisle: "aisle M1 (축산)", coord: "M1-3", x: 50, y: 12, vector: 2, stock: 45 },
+            "목살": { name: "국내산 돼지목살 구이용", aisle: "aisle M1 (축산)", coord: "M1-4", x: 55, y: 12, vector: 2, stock: 25 },
+            "한우": { name: "한우 등심 구이용", aisle: "aisle M1 (축산)", coord: "M1-2", x: 45, y: 12, vector: 2, stock: 8 },
+            "소고기": { name: "한우 등심 구이용", aisle: "aisle M1 (축산)", coord: "M1-2", x: 45, y: 12, vector: 2, stock: 8 },
+            "항정살": { name: "국내산 돼지 항정살", aisle: "aisle M1 (축산)", coord: "M1-5", x: 58, y: 12, vector: 2, stock: 15 },
+            "갈비": { name: "LA식 소갈비 냉동", aisle: "aisle M1 (축산)", coord: "M1-7", x: 63, y: 12, vector: 2, stock: 12 },
+            "닭가슴살": { name: "국내산 냉장 닭가슴살", aisle: "aisle M1 (축산)", coord: "M1-6", x: 62, y: 12, vector: 2, stock: 60 },
+
+            // 야채 / 과일
+            "대파": { name: "국내산 대파 단", aisle: "aisle V2 (야채)", coord: "V2-2", x: 93, y: 40, vector: 4, stock: 40 },
+            "양파": { name: "햇양파망 1.5kg", aisle: "aisle V2 (야채)", coord: "V2-1", x: 93, y: 36, vector: 4, stock: 50 },
+            "마늘": { name: "국산 깐마늘 500g", aisle: "aisle V2 (야채)", coord: "V2-4", x: 93, y: 50, vector: 4, stock: 22 },
+            "오이": { name: "백오이 5입", aisle: "aisle V2 (야채)", coord: "V2-6", x: 93, y: 60, vector: 4, stock: 14 },
+            "사과": { name: "청송 사과 봉지", aisle: "aisle V1 (과일)", coord: "V1-1", x: 78, y: 50, vector: 4, stock: 32 },
+            "바나나": { name: "스위티오 바나나", aisle: "aisle V1 (과일)", coord: "V1-8", x: 88, y: 55, vector: 4, stock: 38 },
+
+            // 가공식품 / 라면 / 즉석밥
+            "라면": { name: "농심 신라면 (5개입)", aisle: "aisle A8", coord: "A8-3", x: 68, y: 25, vector: 3, stock: 100 },
+            "신라면": { name: "농심 신라면 (5개입)", aisle: "aisle A8", coord: "A8-3", x: 68, y: 25, vector: 3, stock: 100 },
+            "짜파게티": { name: "농심 짜파게티 (5개입)", aisle: "aisle A8", coord: "A8-4", x: 68, y: 28, vector: 3, stock: 80 },
+            "햇반": { name: "CJ 햇반 (210g x 6)", aisle: "aisle A8", coord: "A8-8", x: 68, y: 38, vector: 3, stock: 120 },
+            "스팸": { name: "스팸 클래식 2호 선물세트", aisle: "aisle A7", coord: "A7-2", x: 60, y: 25, vector: 3, stock: 55 },
+            "카레": { name: "오뚜기 백세카레 (순한맛)", aisle: "aisle A4", coord: "A4-3", x: 42, y: 28, vector: 3, stock: 45 },
+            "우유": { name: "서울우유 1L x 2", aisle: "aisle A2", coord: "A2-5", x: 30, y: 35, vector: 3, stock: 80 },
+
+            // 냉장 / 두부 / 계란
+            "두부": { name: "풀무원 국산콩 부침용 두부", aisle: "aisle B8", coord: "B8-2", x: 68, y: 55, vector: 3, stock: 24 },
+            "계란": { name: "알알이 rich 무항생제란 30구", aisle: "aisle B8", coord: "B8-6", x: 68, y: 70, vector: 3, stock: 40 },
+
+            // 생활용품 / 노브랜드
+            "휴지": { name: "노브랜드 천연펄프 화장지", aisle: "aisle H2", coord: "H2-5", x: 15, y: 70, vector: 5, stock: 40 },
+            "물티슈": { name: "베베숲 아기 물티슈 캡형", aisle: "aisle H2", coord: "H2-7", x: 15, y: 73, vector: 5, stock: 55 },
+            "노브랜드초코칩": { name: "노브랜드 초코칩 쿠키", aisle: "aisle N1 (노브랜드존)", coord: "N1", x: 15, y: 75, vector: 6, stock: 85 }
+        };
+
+        const brandDict = ["노브랜드", "피코크", "농심", "오뚜기", "CJ", "풀무원", "샘표", "퍼실", "베베숲", "2080", "동원", "백설", "이연복", "오리온", "서울우유"];
+        let cartItems = [];
+
+        function processInput() {
+            const inputEl = document.getElementById('itemInput');
+            let rawText = inputEl.value.trim();
+            if(!rawText) return;
+            inputEl.value = '';
+
+            let detectedBrand = null;
+            for (let brand of brandDict) {
+                if (rawText.includes(brand)) { detectedBrand = brand; break; }
+            }
+
+            let normalizedInput = rawText.replace(/\s+/g, '');
+            let matchedKey = Object.keys(enterpriseDB).find(k => normalizedInput.includes(k) || k.includes(normalizedInput));
+            if(normalizedInput.includes("노브랜드") && !matchedKey) { matchedKey = "노브랜드초코칩"; }
+
+            if(matchedKey) {
+                let baseItem = enterpriseDB[matchedKey];
+                let finalItem = {
+                    id: Date.now() + Math.random(),
+                    name: rawText.includes("노브랜드") && !baseItem.name.includes("노브랜드") ? "노브랜드 " + baseItem.name : baseItem.name,
+                    aisle: baseItem.aisle,
+                    coord: baseItem.coord,
+                    x: baseItem.x,
+                    y: baseItem.y,
+                    vector: baseItem.vector,
+                    stock: baseItem.stock,
+                    brand: detectedBrand || (baseItem.aisle.includes("노브랜드") ? "노브랜드" : null)
+                };
+
+                if(!cartItems.some(i => i.name === finalItem.name)) {
+                    cartItems.push(finalItem);
+                    cartItems.sort((a, b) => a.vector - b.vector);
+                    
+                    renderCart();
+                    renderCustomerRoute();
+                    drawMapOverlay();
+                    
+                    switchTab('routemap');
+                } else {
+                    alert("이미 쇼핑 리스트에 등록된 상품입니다.");
+                }
+            } else {
+                suggestAlternativeItems(rawText);
+            }
+        }
+
+        // 재고 및 정보 미등록 시 추천 상품 자동 제안
+        function suggestAlternativeItems(query) {
+            const keys = Object.keys(enterpriseDB);
+            let recommendations = [];
+            while(recommendations.length < 3 && recommendations.length < keys.length) {
+                let randomKey = keys[Math.floor(Math.random() * keys.length)];
+                let item = enterpriseDB[randomKey];
+                if(!recommendations.some(r => r.name === item.name)) {
+                    recommendations.push(item);
+                }
+            }
+            let recText = recommendations.map(r => `• ${r.name} (${r.aisle})`).join('\n');
+            alert(`"${query}"에 대한 정확한 재고 및 상품 정보를 찾을 수 없습니다.\n\n[이마트 광주점 AI 추천 대체 상품]\n${recText}\n\n원하시는 상품을 다시 검색해 등록해보세요!`);
+        }
+
+        function removeItem(id) {
+            cartItems = cartItems.filter(item => item.id !== id);
+            renderCart();
+            renderCustomerRoute();
+            drawMapOverlay();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('userList');
+            const emptyState = document.getElementById('emptyState');
+            if(emptyState) emptyState.style.display = cartItems.length === 0 ? 'flex' : 'none';
+
+            document.getElementById('itemCount').innerText = `${cartItems.length} 건`;
+            document.getElementById('cartBadge').innerText = cartItems.length;
+
+            list.innerHTML = '';
+            if(cartItems.length === 0) {
+                list.innerHTML = `
+                    <div id="emptyState" class="text-center py-10 text-gray-400 flex flex-col items-center">
+                        <i class="fas fa-box-open text-2xl mb-2 text-gray-300"></i>
+                        <span class="text-xs">구매할 상품을 검색해 추가해보세요.</span>
+                    </div>`;
+                return;
+            }
+
+            cartItems.forEach((item, index) => {
+                let brandBadge = item.brand ? `<span class="bg-[#252525] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold mr-1">${item.brand}</span>` : '';
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center fade-in";
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-5 h-5 bg-yellow-400 text-gray-900 rounded-full font-bold text-xs flex items-center justify-center shadow-sm">${index + 1}</div>
+                        <div>
+                            <div class="font-bold text-gray-900 text-xs mb-0.5">${brandBadge}${item.name}</div>
+                            <div class="text-[10px] text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">재고원활 (${item.stock}개)</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-right">
+                            <div class="text-[10px] font-bold text-gray-800 bg-gray-50 px-2 py-1 rounded border border-gray-200">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-0.5"></i>${item.aisle}
+                            </div>
+                        </div>
+                        <button onclick="removeItem(${item.id})" class="text-gray-400 hover:text-red-500 p-1 text-xs cursor-pointer">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function renderCustomerRoute() {
+            const routeList = document.getElementById('customerRouteList');
+            const routeCount = document.getElementById('routeCount');
+            routeCount.innerText = `${cartItems.length}개 코스`;
+
+            if(cartItems.length === 0) {
+                routeList.innerHTML = `<div class="text-center py-10 text-gray-400 text-xs">선택된 상품이 없습니다. 홈 탭에서 상품을 추가해주세요.</div>`;
+                return;
+            }
+
+            routeList.innerHTML = '';
+            cartItems.forEach((item, index) => {
+                let brandBadge = item.brand ? `<span class="bg-[#252525] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold mr-1">${item.brand}</span>` : '';
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex items-start justify-between fade-in";
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 bg-yellow-500 text-black rounded-full font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">${index + 1}</div>
+                        <div>
+                            <div class="text-[10px] font-bold text-yellow-600 uppercase mb-0.5">${index + 1}번째 경로 코스</div>
+                            <div class="font-bold text-gray-900 text-xs mb-1">${brandBadge}${item.name}</div>
+                            <div class="text-[11px] text-gray-600 mb-0.5"><i class="fas fa-compass text-yellow-500 mr-1"></i>위치: <b class="text-gray-900">${item.aisle} (${item.coord})</b></div>
+                        </div>
+                    </div>
+                    <button onclick="removeItem(${item.id})" class="text-gray-400 hover:text-red-500 p-1 text-xs cursor-pointer">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                routeList.appendChild(card);
+            });
+        }
+
+        function initCanvas() {
+            const img = document.getElementById('routeMapImage');
+            if(img && img.complete) { drawMapOverlay(); } else if(img) { img.onload = drawMapOverlay; }
+        }
+
+        // 출발선(초록색 시작점 IN)과 출구(빨간색 종료점 OUT)가 명확히 구분된 노란색 내비게이션 경로선 렌더링
+        function drawMapOverlay() {
+            const canvas = document.getElementById('mapCanvas');
+            const img = document.getElementById('routeMapImage');
+            if(!canvas || !img) return;
+
+            const width = img.clientWidth;
+            const height = img.clientHeight;
+            if(width === 0 || height === 0) return;
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+
+            if(cartItems.length === 0) return;
+
+            let startPoint = { x: width * 0.92, y: height * 0.95 }; // 입구 IN
+            let exitPoint = { x: width * 0.52, y: height * 0.95 }; // 출구 OUT
+
+            let points = [startPoint];
+            cartItems.forEach(item => {
+                points.push({ x: width * (item.x / 100), y: height * (item.y / 100) });
+            });
+            points.push(exitPoint);
+
+            // 경로선 그림자
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for(let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+            ctx.lineWidth = 6;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+
+            // 메인 노란색 내비게이션 경로선
+            ctx.strokeStyle = "#FACC15";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // 출발점 (초록색 IN 마커)
+            ctx.beginPath();
+            ctx.arc(startPoint.x, startPoint.y - 6, 12, 0, Math.PI * 2);
+            ctx.fillStyle = "#16A34A";
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.stroke();
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "bold 9px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("IN", startPoint.x, startPoint.y - 6);
+
+            // 각 상품별 순번 핀 번호
+            cartItems.forEach((item, index) => {
+                let px = width * (item.x / 100);
+                let py = height * (item.y / 100);
+
+                ctx.beginPath();
+                ctx.arc(px, py - 6, 11, 0, Math.PI * 2);
+                ctx.fillStyle = "#111827";
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = "#FACC15";
+                ctx.stroke();
+
+                ctx.fillStyle = "#FFFFFF";
+                ctx.font = "bold 11px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(index + 1, px, py - 6);
+            });
+
+            // 출구점 (빨간색 OUT 마커)
+            ctx.beginPath();
+            ctx.arc(exitPoint.x, exitPoint.y - 6, 12, 0, Math.PI * 2);
+            ctx.fillStyle = "#DC2626";
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.stroke();
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "bold 8px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("OUT", exitPoint.x, exitPoint.y - 6);
+        }
+    </script>
+</body>
+</html>
